@@ -1,0 +1,144 @@
+openapi: 3.0.3
+
+info:
+  title: digbeats API
+  version: 1.0.0
+
+paths:
+  /api/recommendations:
+    # 本来はGETメソッドだがrequestBodyを使いたいのでPOSTメソッドに変更
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                track_name:
+                  type: string
+                  example: 夜に駆ける
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  seed_track_name:
+                    type: string
+                    example: 夜に駆ける
+                  recommendedTracks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        track_name:
+                          type: string
+                          example: 怪物
+                        artist_name:
+                          type: string
+                          example: YOASOBI
+                        preview_url:
+                          type: string
+                          format: uri
+                          example: https://xxx.co/xxx.mp3
+                        album_image:
+                          type: string
+                          format: uri
+                          example: https://xxx.co/image/xxx.jpg
+                        artist_image:
+                          type: string
+                          format: uri
+                          example: https://xxx.co/image/xxx.jpg
+
+  /api/favorites/{track_id}:
+    post:
+      parameters:
+        - name: track_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        201:
+          description: Create
+    delete:
+      parameters:
+        - name: track_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+
+  /api/recommendations/history:
+    get:
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    track_name:
+                      type: string
+                      example: 怪物
+                    artist_name:
+                      type: string
+                      example: YOASOBI
+                    preview_url:
+                      type: string
+                      format: uri
+                      example: https://xxx.co/xxx.mp3
+                    album_image:
+                      type: string
+                      format: uri
+                      example: https://xxx.co/image/xxx.jpg
+                    artist_image:
+                      type: string
+                      format: uri
+                      example: https://xxx.co/image/xxx.jpg
+                    isLiked:
+                      type: boolean
+                      example: false
+
+  /api/favorites:
+    get:
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    track_name:
+                      type: string
+                      example: 怪物
+                    artist_name:
+                      type: string
+                      example: YOASOBI
+                    preview_url:
+                      type: string
+                      format: uri
+                      example: https://xxx.co/xxx.mp3
+                    album_image:
+                      type: string
+                      format: uri
+                      example: https://xxx.co/image/xxx.jpg
+                    artist_image:
+                      type: string
+                      format: uri
+                      example: https://xxx.co/image/xxx.jpg
+                    isLiked:
+                      type: boolean
+                      example: false

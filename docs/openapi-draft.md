@@ -91,14 +91,16 @@ GET /api/recommendations/history
 レスポンスボディ
 
 ```json
-{
-  "track_name": "楽曲名",
-  "artist_name": "アーティスト名",
-  "preview_url": "プレビュー音源URL",
-  "album_image": "アルバム画像",
-  "artist_image": "アーティスト画像",
-  "isLiked": "boolean"
-}
+[
+  {
+    "track_name": "楽曲名",
+    "artist_name": "アーティスト名",
+    "preview_url": "プレビュー音源URL",
+    "album_image": "アルバム画像",
+    "artist_image": "アーティスト画像",
+    "isLiked": "boolean"
+  }
+]
 ```
 
 ### お気に入り一覧を取得する
@@ -109,12 +111,14 @@ GET /api/favorites
 レスポンスボディ
 
 ```json
-{
-  "track_name": "楽曲名",
-  "artist_name": "アーティスト名",
-  "preview_url": "プレビュー音源URL",
-  "album_image": "アルバム画像",
-  "artist_image": "アーティスト画像",
-  "isLiked": "boolean"
-}
+[
+  {
+    "track_name": "楽曲名",
+    "artist_name": "アーティスト名",
+    "preview_url": "プレビュー音源URL",
+    "album_image": "アルバム画像",
+    "artist_image": "アーティスト画像",
+    "isLiked": "boolean"
+  }
+]
 ````
