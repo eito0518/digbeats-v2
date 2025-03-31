@@ -86,7 +86,7 @@ DELETE /api/favorites/{track_id}
 
 ### レコメンド履歴を取得する
 
-GET /api/recommendations
+GET /api/recommendations/history
 
 レスポンスボディ
 
