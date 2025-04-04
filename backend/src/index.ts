@@ -49,6 +49,47 @@ app.use(morgan("dev"));
 app.use(express.json());
 
 // 処理
+// キーワード検索API
+app.post(
+  "/api/search",
+  asyncHandler(async (req, res: any) => {
+    // キーワードとアクセストークンを取得
+    const keyword = req.body.keyword;
+    const accessToken = await getToken();
+
+    // キーワード検索
+    const searchResult = await axios.get(
+      `${SPOTIFY_API_BASE_URL}/search?q=${encodeURIComponent(
+        keyword
+      )}&type=track&limit=5`,
+      {
+        headers: {
+          Authorization: "Bearer " + accessToken,
+        },
+      }
+    );
+
+    const items = searchResult.data.tracks.items;
+    if (!items || items.length === 0) {
+      return res.status(404).json({ message: "曲が見つかりませんでした" });
+    }
+
+    const tracksInfo = items.map((item) => {
+      const trackName = item.name;
+
+      const artists = item.artists;
+      const artistsName = artists.map((artist) => artist.name);
+
+      return `
+      trackName: ${trackName}
+      artistsName: ${artistsName}
+      `;
+    });
+
+    return res.status(200).json({ tracksInfo });
+  })
+);
+
 // レコメンドAPI
 app.post(
   "/api/recommendations",
