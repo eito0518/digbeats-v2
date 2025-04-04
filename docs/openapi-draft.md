@@ -50,14 +50,14 @@
 
 ### 楽曲名でレコメンドを取得する
 
-GET /api/recommendations
+POST /api/recommendations
 
 リクエストボディ
 
 ```json
-// 日本語の可能性もあるのでボディに含める
+// 日本語の可能性もあるのでボディに含める(POSTメソッドを使って取得)
 {
-  "track_name": "夜に駆ける"
+  "seed": "よるにかける"
 }
 ```
 
@@ -65,14 +65,14 @@ GET /api/recommendations
 
 ```json
 {
-  "seed_track_name": "シード曲の正式な楽曲名",
+  "seedTrackName": "シード曲の正式な楽曲名",
   "recommendedTracks": [
     {
-      "track_name": "楽曲名",
-      "artist_name": "アーティスト名",
-      "preview_url": "プレビュー音源URL",
-      "album_image": "アルバム画像",
-      "artist_image": "アーティスト画像"
+      "trackName": "楽曲名",
+      "artistName": "アーティスト名",
+      "previewUrl": "プレビュー音源URL",
+      "albumImage": "アルバム画像",
+      "artistImage": "アーティスト画像"
     }
   ]
 }
@@ -80,9 +80,9 @@ GET /api/recommendations
 
 ### 楽曲をお気に入りに登録・削除する
 
-POST /api/favorites/{track_id}
+POST /api/favorites/{trackId}
 
-DELETE /api/favorites/{track_id}
+DELETE /api/favorites/{trackId}
 
 ### レコメンド履歴を取得する
 
@@ -93,11 +93,11 @@ GET /api/recommendations/history
 ```json
 [
   {
-    "track_name": "楽曲名",
-    "artist_name": "アーティスト名",
-    "preview_url": "プレビュー音源URL",
-    "album_image": "アルバム画像",
-    "artist_image": "アーティスト画像",
+    "trackName": "楽曲名",
+    "artistName": "アーティスト名",
+    "previewUrl": "プレビュー音源URL",
+    "albumImage": "アルバム画像",
+    "artistImage": "アーティスト画像",
     "isLiked": "boolean"
   }
 ]
@@ -113,11 +113,11 @@ GET /api/favorites
 ```json
 [
   {
-    "track_name": "楽曲名",
-    "artist_name": "アーティスト名",
-    "preview_url": "プレビュー音源URL",
-    "album_image": "アルバム画像",
-    "artist_image": "アーティスト画像",
+    "trackName": "楽曲名",
+    "artistName": "アーティスト名",
+    "previewUrl": "プレビュー音源URL",
+    "albumImage": "アルバム画像",
+    "artistImage": "アーティスト画像",
     "isLiked": "boolean"
   }
 ]
