@@ -8,9 +8,19 @@ dotenv.config({ path: ".env.local" });
 
 const PORT = 3000;
 
-const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
-const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
+const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
+const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
+const SPOTIFY_GET_TOKEN_URL = "https://accounts.spotify.com/api/token";
+
+const LASTFM_API_KEY = process.env.LASTFM_API_KEY;
+const LASTFM_SHARED_SECRET = process.env.LASTFM_SHARED_SECRET;
+const LASTFM_API_BASE_URL = "http://ws.audioscrobbler.com/2.0";
+
+const KKBOX_CLIENT_ID = process.env.KKBOX_CLIENT_ID;
+const KKBOX_CLIENT_SECRET = process.env.KKBOX_CLIENT_SECRET;
+const KKBOX_API_BASE_URL = "https://api.kkbox.com/v1.1";
+const KKBOX_GET_TOKEN_URL = "https://account.kkbox.com/oauth2/token";
 
 // エラー処理関数を定義
 async function errorHandler(
@@ -25,17 +35,37 @@ async function errorHandler(
   });
 }
 
-// アクセストークン取得関数を定義
-async function getToken() {
+// Spotifyアクセストークン取得関数
+async function getSpotifyToken() {
   const response = await axios.post(
-    "https://accounts.spotify.com/api/token",
+    SPOTIFY_GET_TOKEN_URL,
     new URLSearchParams({ grant_type: "client_credentials" }),
     {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization:
           "Basic " +
-          Buffer.from(CLIENT_ID + ":" + CLIENT_SECRET).toString("base64"),
+          Buffer.from(SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET).toString(
+            "base64"
+          ),
+      },
+    }
+  );
+  return response.data.access_token;
+}
+
+// KKBOXアクセストークン取得関数
+async function getKkBoxToken() {
+  const response = await axios.post(
+    KKBOX_GET_TOKEN_URL,
+    new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: KKBOX_CLIENT_ID,
+      client_secret: KKBOX_CLIENT_SECRET,
+    }),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
       },
     }
   );
@@ -49,15 +79,15 @@ app.use(morgan("dev"));
 app.use(express.json());
 
 // 処理
-// キーワード検索API
+// Spotifyキーワード検索API
 app.post(
   "/api/search",
   asyncHandler(async (req, res: any) => {
-    // キーワードとアクセストークンを取得
+    // キーワードとSpotifyアクセストークンを取得
     const keyword = req.body.keyword;
-    const accessToken = await getToken();
+    const accessToken = await getSpotifyToken();
 
-    // キーワード検索
+    // キーワードで検索
     const searchResult = await axios.get(
       `${SPOTIFY_API_BASE_URL}/search?q=${encodeURIComponent(
         keyword
@@ -87,52 +117,128 @@ app.post(
   })
 );
 
-// レコメンドAPI
+// LASTFM検索API
 app.post(
-  "/api/recommendations",
+  "/api/search/lastfm",
   asyncHandler(async (req, res: any) => {
-    // 楽曲情報とアクセストークンを取得
-    const seedTrackId = req.body.trackId;
-    const seedArtistId = req.body.artistId;
-    const accessToken = await getToken();
+    // 楽曲名とアーティスト名を取得
+    const trackName = req.body.trackName;
+    const artistName = req.body.artistName;
 
-    // TODO: seedTrackId が tracks テーブルに存在しなければ、挿入する
+    // 楽曲名・アーティスト名で検索
+    const searchResult = await axios.get(
+      `${LASTFM_API_BASE_URL}/?method=track.search&track=${encodeURIComponent(
+        trackName
+      )}&artist=${encodeURIComponent(artistName)}&api_key=${encodeURIComponent(
+        LASTFM_API_KEY
+      )}&format=json`
+    );
 
-    // TODO: seedTrackId を favorites テーブルに自動追加する（user_id, track_id）
-
-    // レコメンド一覧を取得
-    const artistParam = encodeURIComponent(seedArtistId);
-    const trackParam = encodeURIComponent(seedTrackId);
-    const url = `${SPOTIFY_API_BASE_URL}/recommendations?seed_tracks=${trackParam}`;
-    console.log(`デバッグ用！！！！！！！ url: ${url}`); //デバッグ
-    const getRecommendationsResult = await axios.get(url, {
-      headers: {
-        Authorization: "Bearer " + accessToken,
-      },
-    });
-
-    const tracks = getRecommendationsResult.data.tracks;
-    if (!tracks || tracks.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "おすすめ楽曲が見つかりませんでした" });
+    const trackmatches = searchResult.data.results.trackmatches;
+    if (!trackmatches || trackmatches.length === 0) {
+      return res.status(404).json({ message: "曲が見つかりませんでした" });
     }
 
-    const tracksInfo = tracks.map((track) => {
-      const trackName = track.name;
-      const artistsName = track.artists.map((artist) => artist.name);
-      return `
-      trackName: ${trackName}
-      artistsName: ${artistsName}
-      `;
+    return res.status(200).json({ trackmatches });
+  })
+);
+
+// KKBOXキーワード検索API
+app.post(
+  "/api/search/kkbox",
+  asyncHandler(async (req, res: any) => {
+    // キーワードとKKBOXアクセストークンを取得
+    const keyword = req.body.keyword;
+    const accessToken = await getKkBoxToken();
+
+    // キーワードで検索
+    const searchResult = await axios.get(
+      `${KKBOX_API_BASE_URL}/search?q=${encodeURIComponent(
+        keyword
+      )}&type=track&territory=JP&limit=5`,
+      {
+        headers: {
+          accept: "application/json",
+          authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    const data = searchResult.data.tracks.data;
+    if (!data || data.length === 0) {
+      return res.status(404).json({ message: "曲が見つかりませんでした" });
+    }
+
+    const tracksInfo = data.map((data) => {
+      const trackName = data.name;
+      const trackId = data.id;
+      const trackUrl = data.url;
+
+      return `trackName: ${trackName},trackId: ${trackId}, trackUrl: ${trackUrl}`;
     });
 
-    // TODO: tracks テーブルに存在しないものは全て tracks テーブルに保存
+    return res.status(200).json({ tracksInfo });
+  })
+);
 
-    // TODO: recommendations テーブルに記録（user_id, seed_track_id, created_at）
+// LASTFMレコメンドAPI
+app.post(
+  "/api/recommendations/lastfm",
+  asyncHandler(async (req, res: any) => {
+    // 楽曲名・アーティスト名を取得
+    const seedTrackName = req.body.trackName;
+    const seedArtistName = req.body.artistName;
+
+    // 類似楽曲一覧を取得
+    const getSimilarResult = await axios.get(
+      `${LASTFM_API_BASE_URL}/?method=track.getsimilar&track=${encodeURIComponent(
+        seedTrackName
+      )}&artist=${encodeURIComponent(
+        seedArtistName
+      )}&api_key=${encodeURIComponent(LASTFM_API_KEY)}&format=json`
+    );
+
+    const similarTracks = getSimilarResult.data.similartracks.track;
+    if (!similarTracks || similarTracks.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "類似楽曲が見つかりませんでした" });
+    }
 
     // レコメンド一覧を返す
-    return res.status(200).json({ tracksInfo });
+    return res.status(200).json({ similarTracks });
+  })
+);
+
+// KKBOXレコメンドAPI
+app.post(
+  "/api/recommendations/kkbox",
+  asyncHandler(async (req, res: any) => {
+    // トラックIdを取得
+    const seedTrackId = req.body.trackId;
+    // KKBOXアクセストークンを取得
+    const accessToken = await getKkBoxToken();
+
+    // レコメンド一覧を取得
+    const getRecommendedResult = await axios.get(
+      `${KKBOX_API_BASE_URL}/tracks/${seedTrackId}/recommended-tracks?territory=JP&limit=10`,
+      {
+        headers: {
+          accept: "application/json",
+          authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    const recommendedTracks = getRecommendedResult.data.tracks.data;
+    if (!recommendedTracks || recommendedTracks.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "類似楽曲が見つかりませんでした" });
+    }
+
+    // レコメンド一覧を返す
+    return res.status(200).json({ recommendedTracks });
   })
 );
 
